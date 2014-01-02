@@ -13,7 +13,7 @@ var compiler = require('../lib/compiler');
 var async = require('async');
 
 function asyncCompile(content, filename, options, callback) {
-  var result;
+  var result;    
   try {
     result = compiler.compile(content, filename, options);
   } catch (e) {
@@ -28,8 +28,7 @@ function asyncCompile(content, filename, options, callback) {
 * */
 function compileAll(grunt, compile, srcs, dest, options, callback) {
   grunt.log.debug('Compiling... ' + dest);
-
-
+  
   async.map(srcs, function(src, callback) {
     var content = grunt.file.read(src).toString('utf8');
     compile(content, src, options, callback);
@@ -37,10 +36,23 @@ function compileAll(grunt, compile, srcs, dest, options, callback) {
     if (err) {
       grunt.log.error(err);
       callback(false);
-    } else {
-      var compiled = result.join('');
-      grunt.log.debug('Compilation successful - ' + dest);
-      grunt.file.write(dest, compiled, {encoding: 'utf8'});
+    } else {	  
+	  var compiled;	  
+	  result.forEach(function (r) {
+	    if (r.compiledSource) {
+		  if (dest.indexOf('/', dest.length - 1) !== -1) {
+	        var outputFileName = dest + r.fileName;
+			grunt.file.write(outputFileName, r.compiledSource, {encoding: 'utf8'});
+	      }
+        }
+	  });
+	  
+	  if (compiled === null) {
+	    compiled = result.join('');
+		grunt.file.write(dest, compiled, {encoding: 'utf8'});
+	  }
+	  
+	  grunt.log.debug('Compilation successful - ' + dest);
       grunt.log.ok(srcs + ' -> ' + dest);
       callback(true);
     }
